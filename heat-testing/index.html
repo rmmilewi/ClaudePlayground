@@ -1,0 +1,2188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Testing Scientific Software — An Interactive Guide</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg-primary: #0a0e17;
+  --bg-secondary: #111827;
+  --bg-tertiary: #1f2937;
+  --bg-quaternary: #374151;
+  --text-primary: #e5e7eb;
+  --text-secondary: #9ca3af;
+  --text-dim: #6b7280;
+  --border: #2d3748;
+  --accent-1: #4ecdc4;
+  --accent-2: #ff6b6b;
+  --accent-3: #ffd93d;
+  --accent-4: #a78bfa;
+  --accent-5: #34d399;
+  --success: #10b981;
+  --failure: #ef4444;
+  --warning: #f59e0b;
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ─── Layout ─── */
+.app {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  grid-template-rows: auto 1fr;
+  min-height: 100vh;
+}
+
+header {
+  grid-column: 1 / -1;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+header h1 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+header h1 span { opacity: 0.5; font-weight: 400; }
+
+.progress-bar {
+  width: 200px;
+  height: 6px;
+  background: var(--bg-tertiary);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 3px;
+  transition: width 0.6s ease, background 0.6s ease;
+}
+
+/* ─── Sidebar ─── */
+.sidebar {
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border);
+  padding: 20px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  border-left: 3px solid transparent;
+  position: relative;
+}
+
+.sidebar-item:hover { background: var(--bg-tertiary); }
+
+.sidebar-item.active {
+  background: rgba(255,255,255,0.04);
+  border-left-color: var(--accent-1);
+}
+
+.sidebar-item .chapter-num {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border: 2px solid var(--border);
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+}
+
+.sidebar-item.active .chapter-num {
+  border-color: currentColor;
+  background: currentColor;
+  color: var(--bg-primary) !important;
+}
+
+.sidebar-item.completed .chapter-num {
+  border-color: var(--success);
+  background: var(--success);
+  color: var(--bg-primary) !important;
+}
+
+.sidebar-item.completed .chapter-num::after {
+  content: '✓';
+  color: var(--bg-primary);
+  font-weight: 900;
+}
+
+.sidebar-item .chapter-label {
+  font-size: 0.85rem;
+  line-height: 1.3;
+}
+
+.sidebar-item .chapter-label small {
+  display: block;
+  font-size: 0.72rem;
+  opacity: 0.5;
+  margin-top: 1px;
+}
+
+.sidebar-summary {
+  margin-top: auto;
+  padding: 16px 20px;
+  border-top: 1px solid var(--border);
+}
+
+.sidebar-summary-btn {
+  width: 100%;
+  padding: 10px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sidebar-summary-btn:hover {
+  background: var(--bg-quaternary);
+  color: var(--text-primary);
+}
+
+/* ─── Main Content ─── */
+.content {
+  padding: 32px 40px;
+  overflow-y: auto;
+  max-height: calc(100vh - 52px);
+}
+
+.chapter-header {
+  margin-bottom: 24px;
+}
+
+.chapter-tag {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 8px;
+  opacity: 0.9;
+}
+
+.chapter-header h2 {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.chapter-intro {
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: var(--text-secondary);
+  max-width: 780px;
+  margin-bottom: 8px;
+}
+
+.math-block {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 18px;
+  margin: 12px 0;
+  font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  font-size: 0.88rem;
+  color: var(--accent-3);
+  overflow-x: auto;
+}
+
+.code-block {
+  background: #0d1117;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 18px;
+  margin: 12px 0;
+  font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  font-size: 0.82rem;
+  line-height: 1.6;
+  color: #c9d1d9;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.code-block .kw { color: #ff7b72; }
+.code-block .fn { color: #d2a8ff; }
+.code-block .cm { color: #8b949e; }
+.code-block .num { color: #79c0ff; }
+.code-block .str { color: #a5d6ff; }
+
+/* ─── Visualization area ─── */
+.viz-area {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.viz-area canvas {
+  width: 100%;
+  display: block;
+  border-radius: 6px;
+}
+
+.viz-label {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ─── Controls ─── */
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.btn {
+  padding: 9px 20px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-primary {
+  background: var(--accent-1);
+  color: var(--bg-primary);
+}
+
+.btn-primary:hover { filter: brightness(1.15); }
+.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.btn-secondary {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover { background: var(--bg-quaternary); }
+
+.btn-next {
+  background: var(--success);
+  color: var(--bg-primary);
+}
+
+.btn-next:hover { filter: brightness(1.15); }
+
+/* Toggle Switch */
+.toggle-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px;
+  background: var(--bg-tertiary);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.toggle-label {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+.toggle-label .bug-name { color: var(--failure); font-weight: 600; }
+
+.toggle {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  cursor: pointer;
+}
+
+.toggle input { display: none; }
+
+.toggle-track {
+  position: absolute;
+  inset: 0;
+  background: var(--bg-quaternary);
+  border-radius: 12px;
+  transition: background 0.25s ease;
+}
+
+.toggle input:checked + .toggle-track {
+  background: var(--failure);
+}
+
+.toggle-thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  background: white;
+  border-radius: 50%;
+  transition: transform 0.25s ease;
+  pointer-events: none;
+}
+
+.toggle input:checked ~ .toggle-thumb {
+  transform: translateX(20px);
+}
+
+/* ─── Results Panel ─── */
+.results-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.result-card, .lesson-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.result-card h3, .lesson-card h3 {
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+  margin-bottom: 12px;
+}
+
+.result-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 14px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+  animation: badgePop 0.3s ease;
+}
+
+@keyframes badgePop {
+  0% { transform: scale(0.8); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.result-badge.pass { background: rgba(16,185,129,0.15); color: var(--success); }
+.result-badge.fail { background: rgba(239,68,68,0.15); color: var(--failure); }
+
+.result-metric {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin: 4px 0;
+}
+
+.result-metric strong { color: var(--text-primary); }
+
+.lesson-card {
+  border-color: rgba(255,255,255,0.08);
+  background: linear-gradient(135deg, var(--bg-secondary), rgba(255,255,255,0.02));
+}
+
+.lesson-card p {
+  font-size: 0.9rem;
+  line-height: 1.65;
+  color: var(--text-secondary);
+}
+
+.lesson-card .strength, .lesson-card .limitation {
+  margin: 6px 0;
+  padding-left: 20px;
+  position: relative;
+  font-size: 0.85rem;
+}
+
+.lesson-card .strength::before {
+  content: '+';
+  position: absolute;
+  left: 0;
+  color: var(--success);
+  font-weight: 700;
+}
+
+.lesson-card .limitation::before {
+  content: '−';
+  position: absolute;
+  left: 2px;
+  color: var(--failure);
+  font-weight: 700;
+}
+
+/* ─── Property Dashboard ─── */
+.property-dashboard {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.property-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  transition: border-color 0.3s ease;
+}
+
+.property-card.pass { border-color: var(--success); }
+.property-card.fail { border-color: var(--failure); }
+
+.property-card .prop-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.property-card .prop-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.property-card .prop-status {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--text-dim);
+  transition: background 0.3s ease;
+}
+
+.property-card.pass .prop-status { background: var(--success); box-shadow: 0 0 6px var(--success); }
+.property-card.fail .prop-status { background: var(--failure); box-shadow: 0 0 6px var(--failure); animation: pulse 1s infinite; }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.property-card .prop-value {
+  font-family: 'Cascadia Code', monospace;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+.property-card canvas {
+  width: 100%;
+  height: 40px;
+  margin-top: 6px;
+  border-radius: 4px;
+}
+
+/* ─── Summary Screen ─── */
+.summary-screen {
+  max-width: 900px;
+}
+
+.summary-screen h2 {
+  font-size: 1.5rem;
+  margin-bottom: 20px;
+}
+
+.summary-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  margin: 20px 0;
+}
+
+.summary-table th, .summary-table td {
+  padding: 10px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+.summary-table th {
+  color: var(--text-dim);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.summary-table td:first-child { font-weight: 600; }
+.summary-table .yes { color: var(--success); }
+.summary-table .no { color: var(--failure); }
+.summary-table .some { color: var(--warning); }
+
+/* ─── Responsive ─── */
+@media (max-width: 900px) {
+  .app { grid-template-columns: 1fr; }
+  .sidebar { flex-direction: row; overflow-x: auto; padding: 10px; border-right: none; border-bottom: 1px solid var(--border); }
+  .sidebar-item { padding: 8px 14px; border-left: none; border-bottom: 3px solid transparent; }
+  .sidebar-item.active { border-bottom-color: var(--accent-1); }
+  .sidebar-summary { display: none; }
+  .content { padding: 20px; max-height: unset; }
+  .results-row { grid-template-columns: 1fr; }
+  .property-dashboard { grid-template-columns: 1fr; }
+}
+
+/* ─── Scrollbar ─── */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--bg-primary); }
+::-webkit-scrollbar-thumb { background: var(--bg-quaternary); border-radius: 4px; }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <header>
+    <h1>Testing Scientific Software <span>— An Interactive Guide</span></h1>
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+  </header>
+  <nav class="sidebar" id="sidebar"></nav>
+  <main class="content" id="content"></main>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+// Heat Simulator — The "Program Under Test"
+// ═══════════════════════════════════════════════════════════════════
+class HeatSimulator {
+  constructor(nx = 100, alpha = 0.01, opts = {}) {
+    this.nx = nx;
+    this.alpha = alpha;
+    this.L = 1.0;
+    this.dx = this.L / (this.nx - 1);
+    this.dt = opts.dt || 0.4 * this.dx * this.dx / this.alpha;
+    this.T = new Float64Array(this.nx);
+    this.time = 0;
+    this.bugs = opts.bugs || {};
+    this.bcMode = opts.bcMode || 'neumann'; // 'neumann' or 'dirichlet'
+  }
+
+  reset(ic = 'gaussian') {
+    this.time = 0;
+    for (let i = 0; i < this.nx; i++) {
+      const x = i * this.dx;
+      if (ic === 'gaussian') {
+        this.T[i] = 100 * Math.exp(-Math.pow((x - 0.5) / 0.1, 2));
+      } else if (ic === 'sine') {
+        this.T[i] = 100 * Math.sin(Math.PI * x / this.L);
+      } else if (ic === 'step') {
+        this.T[i] = (x > 0.25 && x < 0.75) ? 100 : 0;
+      } else if (ic === 'asymmetric') {
+        this.T[i] = 100 * Math.exp(-Math.pow((x - 0.3) / 0.1, 2));
+      } else if (typeof ic === 'function') {
+        this.T[i] = ic(x);
+      }
+    }
+    return this;
+  }
+
+  step() {
+    const a = this.bugs.ct_bug ? this.alpha * 1.2 : this.alpha;
+    const r = a * this.dt / (this.dx * this.dx);
+    const Tn = new Float64Array(this.nx);
+
+    // Interior points
+    const upper = this.bugs.pt_bug ? this.nx - 2 : this.nx - 1;
+    for (let i = 1; i < upper; i++) {
+      if (this.bugs.re_bug) {
+        // Bug: forward difference (first-order) instead of central difference (second-order)
+        Tn[i] = this.T[i] + r * (this.T[i + 1] - this.T[i]);
+      } else {
+        Tn[i] = this.T[i] + r * (this.T[i + 1] - 2 * this.T[i] + this.T[i - 1]);
+      }
+    }
+
+    // Handle skipped point if pt_bug active
+    if (this.bugs.pt_bug) {
+      Tn[this.nx - 2] = this.T[this.nx - 2]; // frozen point
+    }
+
+    // Left boundary
+    if (this.bugs.dt_bug) {
+      Tn[0] = 0; // Bug: Dirichlet BC (drains energy) on a Neumann problem
+    } else if (this.bcMode === 'dirichlet') {
+      Tn[0] = 0;
+    } else {
+      Tn[0] = Tn[1]; // Neumann (insulated)
+    }
+
+    // Right boundary
+    if (this.bugs.mt_bug) {
+      // Bug: asymmetric — uses a slightly different extrapolation
+      Tn[this.nx - 1] = Tn[this.nx - 2] + 0.002 * Tn[this.nx - 2];
+    } else if (this.bcMode === 'dirichlet') {
+      Tn[this.nx - 1] = 0;
+    } else {
+      Tn[this.nx - 1] = Tn[this.nx - 2]; // Neumann
+    }
+
+    this.T = Tn;
+    this.time += this.dt;
+  }
+
+  stepN(n) {
+    for (let k = 0; k < n; k++) this.step();
+  }
+
+  getTotalEnergy() {
+    let sum = 0;
+    for (let i = 0; i < this.nx; i++) sum += this.T[i];
+    return sum * this.dx;
+  }
+
+  clone() {
+    const s = new HeatSimulator(this.nx, this.alpha, { dt: this.dt, bugs: { ...this.bugs }, bcMode: this.bcMode });
+    s.T = new Float64Array(this.T);
+    s.time = this.time;
+    return s;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Analytical Solutions
+// ═══════════════════════════════════════════════════════════════════
+const Analytical = {
+  sine(x, t, alpha, L = 1.0) {
+    return 100 * Math.sin(Math.PI * x / L) * Math.exp(-Math.PI * Math.PI * alpha * t / (L * L));
+  },
+  gaussian(x, t, alpha, A = 100, x0 = 0.5, sigma = 0.1) {
+    const s2 = sigma * sigma + 2 * alpha * t;
+    return A * (sigma / Math.sqrt(s2)) * Math.exp(-Math.pow(x - x0, 2) / (2 * s2));
+  },
+  evaluate(name, nx, t, alpha, L = 1.0) {
+    const result = new Float64Array(nx);
+    const dx = L / (nx - 1);
+    for (let i = 0; i < nx; i++) {
+      const x = i * dx;
+      result[i] = name === 'sine' ? this.sine(x, t, alpha, L) : this.gaussian(x, t, alpha, L);
+    }
+    return result;
+  }
+};
+
+// ═══════════════════════════════════════════════════════════════════
+// Visualizer — Canvas-based rendering
+// ═══════════════════════════════════════════════════════════════════
+class Visualizer {
+  constructor(canvas) {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext('2d');
+    this.dpr = window.devicePixelRatio || 1;
+    this.resize();
+  }
+
+  resize() {
+    const rect = this.canvas.getBoundingClientRect();
+    this.w = rect.width;
+    this.h = rect.height;
+    this.canvas.width = this.w * this.dpr;
+    this.canvas.height = this.h * this.dpr;
+    this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+  }
+
+  clear() {
+    this.ctx.clearRect(0, 0, this.w, this.h);
+  }
+
+  tempToColor(t, tMin = 0, tMax = 100) {
+    const frac = Math.max(0, Math.min(1, (t - tMin) / (tMax - tMin + 1e-12)));
+    // Blue -> White -> Red
+    let r, g, b;
+    if (frac < 0.5) {
+      const f = frac / 0.5;
+      r = Math.round(30 + f * 225);
+      g = Math.round(60 + f * 195);
+      b = Math.round(200 + f * 55);
+    } else {
+      const f = (frac - 0.5) / 0.5;
+      r = Math.round(255);
+      g = Math.round(255 - f * 195);
+      b = Math.round(255 - f * 200);
+    }
+    return `rgb(${r},${g},${b})`;
+  }
+
+  drawHeatBar(T, y, barH, tMin = 0, tMax = 100) {
+    const nx = T.length;
+    const barW = this.w - 60;
+    const x0 = 40;
+    for (let i = 0; i < nx; i++) {
+      const x = x0 + (i / (nx - 1)) * barW;
+      const w = barW / (nx - 1) + 1;
+      this.ctx.fillStyle = this.tempToColor(T[i], tMin, tMax);
+      this.ctx.fillRect(x, y, w, barH);
+    }
+    // Border
+    this.ctx.strokeStyle = '#2d3748';
+    this.ctx.lineWidth = 1;
+    this.ctx.strokeRect(x0, y, barW, barH);
+  }
+
+  drawCurve(T, color, yOff, plotH, tMin = 0, tMax = 100, dashed = false) {
+    const nx = T.length;
+    const x0 = 40;
+    const barW = this.w - 60;
+    this.ctx.beginPath();
+    if (dashed) this.ctx.setLineDash([6, 4]);
+    else this.ctx.setLineDash([]);
+    this.ctx.strokeStyle = color;
+    this.ctx.lineWidth = 2;
+    for (let i = 0; i < nx; i++) {
+      const x = x0 + (i / (nx - 1)) * barW;
+      const frac = Math.max(0, Math.min(1, (T[i] - tMin) / (tMax - tMin + 1e-12)));
+      const y = yOff + plotH * (1 - frac);
+      if (i === 0) this.ctx.moveTo(x, y);
+      else this.ctx.lineTo(x, y);
+    }
+    this.ctx.stroke();
+    this.ctx.setLineDash([]);
+  }
+
+  drawAxes(yOff, plotH, tMin, tMax, label = '') {
+    const x0 = 40;
+    const barW = this.w - 60;
+    this.ctx.strokeStyle = '#374151';
+    this.ctx.lineWidth = 1;
+    // Y axis
+    this.ctx.beginPath();
+    this.ctx.moveTo(x0, yOff);
+    this.ctx.lineTo(x0, yOff + plotH);
+    this.ctx.lineTo(x0 + barW, yOff + plotH);
+    this.ctx.stroke();
+    // Labels
+    this.ctx.fillStyle = '#6b7280';
+    this.ctx.font = '11px monospace';
+    this.ctx.textAlign = 'right';
+    this.ctx.fillText(tMax.toFixed(0), x0 - 4, yOff + 10);
+    this.ctx.fillText(tMin.toFixed(0), x0 - 4, yOff + plotH);
+    this.ctx.textAlign = 'center';
+    this.ctx.fillText('0', x0, yOff + plotH + 14);
+    this.ctx.fillText('x = L', x0 + barW, yOff + plotH + 14);
+    if (label) {
+      this.ctx.fillStyle = '#9ca3af';
+      this.ctx.font = '12px system-ui';
+      this.ctx.textAlign = 'left';
+      this.ctx.fillText(label, x0 + 4, yOff - 4);
+    }
+  }
+
+  drawLegend(items, x, y) {
+    this.ctx.font = '12px system-ui';
+    let cx = x;
+    for (const item of items) {
+      this.ctx.strokeStyle = item.color;
+      this.ctx.lineWidth = 2;
+      if (item.dashed) this.ctx.setLineDash([6, 4]);
+      else this.ctx.setLineDash([]);
+      this.ctx.beginPath();
+      this.ctx.moveTo(cx, y);
+      this.ctx.lineTo(cx + 20, y);
+      this.ctx.stroke();
+      this.ctx.setLineDash([]);
+      this.ctx.fillStyle = '#9ca3af';
+      this.ctx.textAlign = 'left';
+      this.ctx.fillText(item.label, cx + 24, y + 4);
+      cx += this.ctx.measureText(item.label).width + 44;
+    }
+  }
+
+  drawDiffBar(A, B, y, h) {
+    const nx = A.length;
+    const x0 = 40;
+    const barW = this.w - 60;
+    let maxDiff = 0;
+    for (let i = 0; i < nx; i++) maxDiff = Math.max(maxDiff, Math.abs(A[i] - B[i]));
+    if (maxDiff < 1e-10) maxDiff = 1;
+    for (let i = 0; i < nx; i++) {
+      const x = x0 + (i / (nx - 1)) * barW;
+      const w = barW / (nx - 1) + 1;
+      const d = Math.abs(A[i] - B[i]) / maxDiff;
+      this.ctx.fillStyle = `rgba(239,68,68,${d * 0.8})`;
+      this.ctx.fillRect(x, y, w, h);
+    }
+    this.ctx.strokeStyle = '#2d3748';
+    this.ctx.strokeRect(x0, y, barW, h);
+    this.ctx.fillStyle = '#6b7280';
+    this.ctx.font = '11px monospace';
+    this.ctx.textAlign = 'right';
+    this.ctx.fillText(`max|Δ|=${maxDiff.toExponential(2)}`, x0 + barW, y - 3);
+  }
+
+  drawConvergencePlot(data, yOff, plotH) {
+    const x0 = 40;
+    const barW = this.w - 60;
+    this.ctx.strokeStyle = '#374151';
+    this.ctx.lineWidth = 1;
+    this.ctx.beginPath();
+    this.ctx.moveTo(x0, yOff);
+    this.ctx.lineTo(x0, yOff + plotH);
+    this.ctx.lineTo(x0 + barW, yOff + plotH);
+    this.ctx.stroke();
+
+    if (!data || data.length === 0) return;
+
+    // Normalize spatial position for plotting
+    const colors = ['#ff6b6b', '#ffd93d', '#4ecdc4'];
+    const labels = ['h (coarse)', 'h/2 (medium)', 'h/4 (fine)'];
+
+    let tMin = Infinity, tMax = -Infinity;
+    for (const d of data) {
+      for (let i = 0; i < d.length; i++) {
+        if (d[i] < tMin) tMin = d[i];
+        if (d[i] > tMax) tMax = d[i];
+      }
+    }
+    if (tMax - tMin < 1e-10) { tMin -= 1; tMax += 1; }
+
+    this.ctx.fillStyle = '#6b7280';
+    this.ctx.font = '11px monospace';
+    this.ctx.textAlign = 'right';
+    this.ctx.fillText(tMax.toFixed(1), x0 - 4, yOff + 10);
+    this.ctx.fillText(tMin.toFixed(1), x0 - 4, yOff + plotH);
+
+    for (let d = 0; d < data.length; d++) {
+      const T = data[d];
+      this.ctx.beginPath();
+      this.ctx.strokeStyle = colors[d];
+      this.ctx.lineWidth = 2;
+      for (let i = 0; i < T.length; i++) {
+        const x = x0 + (i / (T.length - 1)) * barW;
+        const frac = (T[i] - tMin) / (tMax - tMin);
+        const y = yOff + plotH * (1 - frac);
+        if (i === 0) this.ctx.moveTo(x, y);
+        else this.ctx.lineTo(x, y);
+      }
+      this.ctx.stroke();
+    }
+
+    // Legend
+    let lx = x0 + 10;
+    this.ctx.font = '11px system-ui';
+    for (let d = 0; d < data.length; d++) {
+      this.ctx.strokeStyle = colors[d];
+      this.ctx.lineWidth = 2;
+      this.ctx.beginPath();
+      this.ctx.moveTo(lx, yOff + 14);
+      this.ctx.lineTo(lx + 16, yOff + 14);
+      this.ctx.stroke();
+      this.ctx.fillStyle = '#9ca3af';
+      this.ctx.textAlign = 'left';
+      this.ctx.fillText(labels[d], lx + 20, yOff + 18);
+      lx += this.ctx.measureText(labels[d]).width + 40;
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Test Runners
+// ═══════════════════════════════════════════════════════════════════
+const TestRunner = {
+  classical(bugs, nSteps = 300) {
+    const sim = new HeatSimulator(100, 0.01, { bugs, bcMode: 'dirichlet' });
+    sim.reset('sine');
+    sim.stepN(nSteps);
+    const actual = sim.T;
+    const expected = Analytical.evaluate('sine', sim.nx, sim.time, 0.01);
+    let maxErr = 0, sumErr = 0;
+    for (let i = 0; i < sim.nx; i++) {
+      const e = Math.abs(actual[i] - expected[i]);
+      if (e > maxErr) maxErr = e;
+      sumErr += e;
+    }
+    const tolerance = 0.5;
+    return {
+      passed: maxErr < tolerance,
+      maxError: maxErr,
+      avgError: sumErr / sim.nx,
+      tolerance,
+      actual: Array.from(actual),
+      expected: Array.from(expected),
+      time: sim.time
+    };
+  },
+
+  differential(bugs, nSteps = 400) {
+    const put = new HeatSimulator(100, 0.01, { bugs });
+    const ref = new HeatSimulator(100, 0.01, { bugs: {} });
+    put.reset('gaussian');
+    ref.reset('gaussian');
+    put.stepN(nSteps);
+    ref.stepN(nSteps);
+    let maxDiff = 0;
+    for (let i = 0; i < put.nx; i++) {
+      const d = Math.abs(put.T[i] - ref.T[i]);
+      if (d > maxDiff) maxDiff = d;
+    }
+    const tolerance = 1e-10;
+    return {
+      passed: maxDiff < tolerance,
+      maxDiff,
+      tolerance,
+      putResult: Array.from(put.T),
+      refResult: Array.from(ref.T),
+      time: put.time
+    };
+  },
+
+  property(bugs, nSteps = 500) {
+    const sim = new HeatSimulator(100, 0.01, { bugs });
+    sim.reset('gaussian');
+    const initEnergy = sim.getTotalEnergy();
+    const initMax = Math.max(...sim.T);
+
+    const energyHistory = [initEnergy];
+    const maxHistory = [initMax];
+    const minHistory = [Math.min(...sim.T)];
+    const varianceHistory = [];
+    let energyOk = true, boundsOk = true, convergenceOk = true;
+    let energyFailStep = -1, boundsFailStep = -1;
+
+    const mean0 = initEnergy / sim.L;
+    let v0 = 0;
+    for (let i = 0; i < sim.nx; i++) v0 += Math.pow(sim.T[i] - mean0, 2);
+    varianceHistory.push(v0 / sim.nx);
+
+    for (let s = 0; s < nSteps; s++) {
+      sim.step();
+      const e = sim.getTotalEnergy();
+      energyHistory.push(e);
+      const mx = Math.max(...sim.T);
+      const mn = Math.min(...sim.T);
+      maxHistory.push(mx);
+      minHistory.push(mn);
+
+      const mean = e / sim.L;
+      let v = 0;
+      for (let i = 0; i < sim.nx; i++) v += Math.pow(sim.T[i] - mean, 2);
+      varianceHistory.push(v / sim.nx);
+
+      if (Math.abs(e - initEnergy) > 0.1 && energyOk) {
+        energyOk = false;
+        energyFailStep = s;
+      }
+      if ((mn < -0.01 || mx > initMax + 0.01) && boundsOk) {
+        boundsOk = false;
+        boundsFailStep = s;
+      }
+    }
+
+    // Check convergence: variance should be non-increasing (with tolerance)
+    for (let i = 1; i < varianceHistory.length; i++) {
+      if (varianceHistory[i] > varianceHistory[i - 1] + 0.01) {
+        convergenceOk = false;
+        break;
+      }
+    }
+
+    return {
+      energy: { passed: energyOk, history: energyHistory, failStep: energyFailStep, initial: initEnergy },
+      bounds: { passed: boundsOk, maxHistory, minHistory, failStep: boundsFailStep, initMax },
+      convergence: { passed: convergenceOk, history: varianceHistory },
+      finalT: Array.from(sim.T)
+    };
+  },
+
+  metamorphic(bugs, mr = 'symmetry') {
+    const nSteps = 300;
+    if (mr === 'symmetry') {
+      // Source: asymmetric IC; Follow-up: mirror of source
+      const src = new HeatSimulator(100, 0.01, { bugs });
+      src.reset('asymmetric');
+      const srcInit = Array.from(src.T);
+      src.stepN(nSteps);
+      const srcResult = Array.from(src.T);
+
+      const fup = new HeatSimulator(100, 0.01, { bugs });
+      fup.reset(x => {
+        const xm = 1.0 - x;
+        return 100 * Math.exp(-Math.pow((xm - 0.3) / 0.1, 2));
+      });
+      const fupInit = Array.from(fup.T);
+      fup.stepN(nSteps);
+      const fupResult = Array.from(fup.T);
+
+      // Check: srcResult[i] ≈ fupResult[nx-1-i]
+      let maxDev = 0;
+      const nx = src.nx;
+      for (let i = 0; i < nx; i++) {
+        const d = Math.abs(srcResult[i] - fupResult[nx - 1 - i]);
+        if (d > maxDev) maxDev = d;
+      }
+
+      return {
+        mr: 'Symmetry: T_source(x) = T_followup(L-x)',
+        passed: maxDev < 0.01,
+        maxDeviation: maxDev,
+        srcInit, srcResult, fupInit, fupResult,
+        time: src.time
+      };
+    } else {
+      // Linearity: scale input by 2
+      const k = 2;
+      const src = new HeatSimulator(100, 0.01, { bugs });
+      src.reset('gaussian');
+      const srcInit = Array.from(src.T);
+      src.stepN(nSteps);
+      const srcResult = Array.from(src.T);
+
+      const fup = new HeatSimulator(100, 0.01, { bugs });
+      fup.reset(x => k * 100 * Math.exp(-Math.pow((x - 0.5) / 0.1, 2)));
+      const fupInit = Array.from(fup.T);
+      fup.stepN(nSteps);
+      const fupResult = Array.from(fup.T);
+
+      let maxDev = 0;
+      for (let i = 0; i < src.nx; i++) {
+        const d = Math.abs(fupResult[i] - k * srcResult[i]);
+        if (d > maxDev) maxDev = d;
+      }
+
+      return {
+        mr: `Linearity: T_followup = ${k} × T_source`,
+        passed: maxDev < 0.01,
+        maxDeviation: maxDev,
+        srcInit, srcResult, fupInit, fupResult,
+        time: src.time, k
+      };
+    }
+  },
+
+  richardson(bugs) {
+    // Richardson extrapolation: measure error norm at three resolutions
+    // For a second-order method, error ~ C*h^2, so error(h)/error(h/2) ~ 4
+    const nxVals = [20, 40, 80];
+    const alpha = 0.01;
+    const targetTime = 0.005;
+    const results = []; // store temperature arrays for plotting
+    const errors = [];  // L2 error norms at each resolution
+
+    for (const nx of nxVals) {
+      // Use same small dt (from finest grid) to isolate spatial error
+      const fineDx = 1.0 / (nxVals[2] - 1);
+      const fixedDt = 0.25 * fineDx * fineDx / alpha;
+      const sim = new HeatSimulator(nx, alpha, { bugs, bcMode: 'dirichlet', dt: fixedDt });
+      sim.reset('sine');
+      const stepsNeeded = Math.round(targetTime / fixedDt);
+      sim.stepN(stepsNeeded);
+
+      // Compute L2 error against analytical solution
+      const dx = 1.0 / (nx - 1);
+      let l2 = 0;
+      for (let i = 0; i < nx; i++) {
+        const x = i * dx;
+        const exact = Analytical.sine(x, sim.time, alpha);
+        l2 += Math.pow(sim.T[i] - exact, 2);
+      }
+      l2 = Math.sqrt(l2 / nx);
+      errors.push(l2);
+
+      // Interpolate to common 50-point grid for plotting
+      const common = new Float64Array(50);
+      for (let i = 0; i < 50; i++) {
+        const frac = i / 49;
+        const idx = frac * (nx - 1);
+        const lo = Math.floor(idx);
+        const hi = Math.min(lo + 1, nx - 1);
+        const t = idx - lo;
+        common[i] = sim.T[lo] * (1 - t) + sim.T[hi] * t;
+      }
+      results.push(Array.from(common));
+    }
+
+    // Richardson ratio from error norms: error(h)/error(h/2)
+    // For second-order: ratio ~ 4 (since h doubles each time)
+    const ratio1 = errors[0] / errors[1]; // error(coarse)/error(medium)
+    const ratio2 = errors[1] / errors[2]; // error(medium)/error(fine)
+    const avgRatio = (ratio1 + ratio2) / 2;
+    const expectedRatio = 4.0;
+    const passed = avgRatio > 2.5 && avgRatio < 8.0; // expect ~4 for 2nd order
+
+    return {
+      passed,
+      ratio: avgRatio,
+      expectedRatio,
+      results,
+      errors,
+      nxVals
+    };
+  }
+};
+
+// ═══════════════════════════════════════════════════════════════════
+// Chapter Definitions
+// ═══════════════════════════════════════════════════════════════════
+const CHAPTERS = [
+  {
+    id: 1,
+    title: 'Classical Testing',
+    subtitle: 'Compare against a known answer',
+    color: '#4ecdc4',
+    bugName: 'Wrong Diffusion Coefficient',
+    bugKey: 'ct_bug'
+  },
+  {
+    id: 2,
+    title: 'Differential Testing',
+    subtitle: 'Compare two implementations',
+    color: '#ff6b6b',
+    bugName: 'Boundary Condition Error',
+    bugKey: 'dt_bug'
+  },
+  {
+    id: 3,
+    title: 'Property-Based Testing',
+    subtitle: 'Verify physical invariants',
+    color: '#ffd93d',
+    bugName: 'Off-By-One Loop Error',
+    bugKey: 'pt_bug'
+  },
+  {
+    id: 4,
+    title: 'Metamorphic Testing',
+    subtitle: 'Check input-output relationships',
+    color: '#a78bfa',
+    bugName: 'Asymmetric Boundary',
+    bugKey: 'mt_bug'
+  },
+  {
+    id: 5,
+    title: "Richardson's Extrapolation",
+    subtitle: 'Verify convergence order',
+    color: '#34d399',
+    bugName: 'First-Order Stencil',
+    bugKey: 're_bug'
+  }
+];
+
+// ═══════════════════════════════════════════════════════════════════
+// Application
+// ═══════════════════════════════════════════════════════════════════
+class App {
+  constructor() {
+    this.currentChapter = 0; // 0=intro, 1-5=chapters, 6=summary
+    this.completed = new Set();
+    this.bugStates = {};
+    CHAPTERS.forEach(c => this.bugStates[c.bugKey] = false);
+    this.animId = null;
+  }
+
+  init() {
+    this.renderSidebar();
+    this.showIntro();
+  }
+
+  renderSidebar() {
+    const sb = document.getElementById('sidebar');
+    sb.innerHTML = '';
+    CHAPTERS.forEach(ch => {
+      const item = document.createElement('div');
+      item.className = 'sidebar-item' +
+        (this.currentChapter === ch.id ? ' active' : '') +
+        (this.completed.has(ch.id) ? ' completed' : '');
+      item.style.setProperty('--ch-color', ch.color);
+      item.innerHTML = `
+        <div class="chapter-num" style="color:${ch.color}">${this.completed.has(ch.id) ? '' : ch.id}</div>
+        <div class="chapter-label">${ch.title}<small>${ch.subtitle}</small></div>
+      `;
+      item.onclick = () => this.navigateTo(ch.id);
+      sb.appendChild(item);
+    });
+    // Summary button
+    const sum = document.createElement('div');
+    sum.className = 'sidebar-summary';
+    sum.innerHTML = `<button class="sidebar-summary-btn" id="btn-summary">Summary &amp; Comparison</button>`;
+    sb.appendChild(sum);
+    document.getElementById('btn-summary').onclick = () => this.showSummary();
+
+    // Progress
+    const pct = (this.completed.size / CHAPTERS.length) * 100;
+    const fill = document.getElementById('progress-fill');
+    fill.style.width = pct + '%';
+    fill.style.background = pct === 100
+      ? 'linear-gradient(90deg, #10b981, #34d399)'
+      : `linear-gradient(90deg, #4ecdc4, #a78bfa)`;
+  }
+
+  navigateTo(id) {
+    if (this.animId) { cancelAnimationFrame(this.animId); this.animId = null; }
+    this.currentChapter = id;
+    this.renderSidebar();
+    switch (id) {
+      case 1: this.showChapter1(); break;
+      case 2: this.showChapter2(); break;
+      case 3: this.showChapter3(); break;
+      case 4: this.showChapter4(); break;
+      case 5: this.showChapter5(); break;
+    }
+  }
+
+  showIntro() {
+    const content = document.getElementById('content');
+    content.innerHTML = `
+      <div style="max-width:780px;margin:40px auto;text-align:center;">
+        <div style="font-size:3rem;margin-bottom:20px;">🔬</div>
+        <h2 style="font-size:1.8rem;margin-bottom:16px;">Testing Scientific Software</h2>
+        <p style="color:var(--text-secondary);line-height:1.8;font-size:1rem;margin-bottom:24px;">
+          Scientific simulations power everything from nuclear reactor design to climate modeling.
+          But how do you test code when the "right answer" is unknown? This interactive guide walks
+          you through <strong>five testing approaches</strong> from the software testing literature,
+          using a <strong>1D heat diffusion simulator</strong> as our program under test.
+        </p>
+        <div class="math-block" style="text-align:left;max-width:500px;margin:0 auto 24px auto;">
+          The Heat Equation:  ∂T/∂t = α · ∂²T/∂x²
+
+  Discretized (explicit Euler):
+  T[i]ⁿ⁺¹ = T[i]ⁿ + r·(T[i+1]ⁿ − 2·T[i]ⁿ + T[i−1]ⁿ)
+
+  where r = α·Δt/Δx²  (stability: r ≤ 0.5)
+        </div>
+        <p style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:32px;">
+          Each chapter introduces a testing approach, lets you inject a realistic bug, and shows
+          how that approach catches (or misses) it. Based on the ISSTA 2020 experience report by He et al.
+        </p>
+        <button class="btn btn-primary" style="font-size:1rem;padding:12px 32px;" onclick="heatApp.navigateTo(1)">
+          Begin the Walkthrough →
+        </button>
+      </div>
+    `;
+  }
+
+  // ─── Chapter 1: Classical Testing ─────────────────────────────
+  showChapter1() {
+    const ch = CHAPTERS[0];
+    const content = document.getElementById('content');
+    content.innerHTML = `
+      <div class="chapter-header">
+        <div class="chapter-tag" style="background:${ch.color}22;color:${ch.color}">Chapter 1</div>
+        <h2 style="color:${ch.color}">${ch.title}</h2>
+        <p class="chapter-intro">
+          The simplest testing approach: run the program with a known input and compare the output
+          to an <strong>expected result (oracle)</strong>. For our heat equation with a sine initial condition
+          <code>T(x,0) = 100·sin(πx)</code>, the analytical solution is known exactly:
+        </p>
+        <div class="math-block">T(x,t) = 100·sin(πx)·exp(−π²αt)     (Dirichlet BCs: T=0 at boundaries)</div>
+        <p class="chapter-intro">
+          This lets us compare our numerical result against the true answer. Toggle the bug to see
+          what happens when the diffusion coefficient <code>α</code> is wrong by 20%.
+        </p>
+        <div class="code-block"><span class="cm">// The bug: α is 20% too high</span>
+<span class="kw">const</span> a = <span class="kw">this</span>.bugs.ct_bug ? <span class="kw">this</span>.alpha * <span class="num">1.2</span> : <span class="kw">this</span>.alpha;
+<span class="kw">const</span> r = a * <span class="kw">this</span>.dt / (<span class="kw">this</span>.dx * <span class="kw">this</span>.dx);</div>
+      </div>
+      <div class="viz-area">
+        <div class="viz-label">Heat Distribution T(x) — Numerical vs Analytical</div>
+        <canvas id="ch1-canvas" height="320" style="height:320px"></canvas>
+      </div>
+      <div class="controls">
+        <button class="btn btn-primary" id="ch1-run" style="background:${ch.color}">▶ Run Classical Test</button>
+        <button class="btn btn-secondary" id="ch1-reset">Reset</button>
+        <div class="toggle-group">
+          <span class="toggle-label">Inject Bug: <span class="bug-name">${ch.bugName}</span></span>
+          <label class="toggle">
+            <input type="checkbox" id="ch1-bug" ${this.bugStates.ct_bug ? 'checked' : ''}>
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+        </div>
+      </div>
+      <div class="results-row" id="ch1-results" style="display:none;">
+        <div class="result-card" id="ch1-result-card"></div>
+        <div class="lesson-card">
+          <h3>Key Takeaway</h3>
+          <p>Classical testing is straightforward but requires a <strong>test oracle</strong> — a known correct answer.
+          For real scientific simulations, analytical solutions exist only for simplified cases.</p>
+          <div class="strength">Easy to understand and apply</div>
+          <div class="strength">Gives precise error measurements</div>
+          <div class="limitation">Needs known expected results (oracle problem)</div>
+          <div class="limitation">Analytical solutions rarely exist for complex problems</div>
+        </div>
+      </div>
+      <div style="text-align:right;margin-top:12px;">
+        <button class="btn btn-next" onclick="heatApp.completed.add(1);app.navigateTo(2)">Next: Differential Testing →</button>
+      </div>
+    `;
+
+    const canvas = document.getElementById('ch1-canvas');
+    const viz = new Visualizer(canvas);
+    const self = this;
+
+    const draw = (actual, expected, time) => {
+      viz.resize();
+      viz.clear();
+      const tMax = 100;
+      viz.drawHeatBar(actual, 10, 40, 0, tMax);
+      viz.drawAxes(70, 200, 0, tMax, `t = ${time.toFixed(4)}s`);
+      viz.drawCurve(expected, '#34d399', 70, 200, 0, tMax, true);
+      viz.drawCurve(actual, ch.color, 70, 200, 0, tMax, false);
+      viz.drawLegend([
+        { label: 'Numerical (PUT)', color: ch.color },
+        { label: 'Analytical (Oracle)', color: '#34d399', dashed: true }
+      ], 60, 290);
+    };
+
+    // Initial state
+    const initSim = new HeatSimulator(100, 0.01, { bugs: {}, bcMode: 'dirichlet' });
+    initSim.reset('sine');
+    const initExpected = Analytical.evaluate('sine', 100, 0, 0.01);
+    draw(Array.from(initSim.T), Array.from(initExpected), 0);
+
+    document.getElementById('ch1-bug').onchange = (e) => {
+      this.bugStates.ct_bug = e.target.checked;
+    };
+
+    document.getElementById('ch1-reset').onclick = () => {
+      if (self.animId) { cancelAnimationFrame(self.animId); self.animId = null; }
+      draw(Array.from(initSim.T), Array.from(initExpected), 0);
+      document.getElementById('ch1-results').style.display = 'none';
+      document.getElementById('ch1-run').disabled = false;
+    };
+
+    document.getElementById('ch1-run').onclick = () => {
+      document.getElementById('ch1-run').disabled = true;
+      const bugs = this.bugStates.ct_bug ? { ct_bug: true } : {};
+      const sim = new HeatSimulator(100, 0.01, { bugs, bcMode: 'dirichlet' });
+      sim.reset('sine');
+      let frame = 0;
+      const totalFrames = 120;
+      const stepsPerFrame = 3;
+
+      const animate = () => {
+        sim.stepN(stepsPerFrame);
+        frame++;
+        const expected = Analytical.evaluate('sine', sim.nx, sim.time, 0.01);
+        draw(Array.from(sim.T), Array.from(expected), sim.time);
+
+        if (frame < totalFrames) {
+          self.animId = requestAnimationFrame(animate);
+        } else {
+          // Show results
+          const result = TestRunner.classical(bugs, totalFrames * stepsPerFrame);
+          const rc = document.getElementById('ch1-result-card');
+          rc.innerHTML = `
+            <h3>Test Result</h3>
+            <div class="result-badge ${result.passed ? 'pass' : 'fail'}">
+              ${result.passed ? '✓ PASS' : '✗ FAIL'}
+            </div>
+            <div class="result-metric">Max Error: <strong>${result.maxError.toExponential(3)}</strong></div>
+            <div class="result-metric">Avg Error: <strong>${result.avgError.toExponential(3)}</strong></div>
+            <div class="result-metric">Tolerance: <strong>${result.tolerance.toFixed(1)}</strong></div>
+            <div class="result-metric">Sim Time: <strong>${result.time.toFixed(4)}s</strong></div>
+          `;
+          document.getElementById('ch1-results').style.display = 'grid';
+        }
+      };
+      self.animId = requestAnimationFrame(animate);
+    };
+  }
+
+  // ─── Chapter 2: Differential Testing ──────────────────────────
+  showChapter2() {
+    const ch = CHAPTERS[1];
+    const content = document.getElementById('content');
+    content.innerHTML = `
+      <div class="chapter-header">
+        <div class="chapter-tag" style="background:${ch.color}22;color:${ch.color}">Chapter 2</div>
+        <h2 style="color:${ch.color}">${ch.title}</h2>
+        <p class="chapter-intro">
+          When no analytical solution exists, compare your program against <strong>another implementation</strong>.
+          If two independent programs produce different results for the same input, at least one has a bug.
+          Here we compare a "Program Under Test" against a known-correct "Reference Implementation."
+        </p>
+        <p class="chapter-intro">
+          The bug injects a <strong>Dirichlet boundary condition</strong> (T=0 at left edge) instead of the correct
+          <strong>Neumann condition</strong> (insulated, zero flux). This causes energy to leak out at the boundary.
+        </p>
+        <div class="code-block"><span class="cm">// The bug: Dirichlet BC instead of Neumann</span>
+<span class="kw">if</span> (<span class="kw">this</span>.bugs.dt_bug) {
+  Tn[<span class="num">0</span>] = <span class="num">0</span>;       <span class="cm">// Wrong: temperature fixed at 0</span>
+} <span class="kw">else</span> {
+  Tn[<span class="num">0</span>] = Tn[<span class="num">1</span>];   <span class="cm">// Correct: insulated (zero flux)</span>
+}</div>
+      </div>
+      <div class="viz-area">
+        <div class="viz-label">Reference Implementation vs Program Under Test</div>
+        <canvas id="ch2-canvas" height="400" style="height:400px"></canvas>
+      </div>
+      <div class="controls">
+        <button class="btn btn-primary" id="ch2-run" style="background:${ch.color}">▶ Run Both Simulators</button>
+        <button class="btn btn-secondary" id="ch2-reset">Reset</button>
+        <div class="toggle-group">
+          <span class="toggle-label">Inject Bug: <span class="bug-name">${ch.bugName}</span></span>
+          <label class="toggle">
+            <input type="checkbox" id="ch2-bug" ${this.bugStates.dt_bug ? 'checked' : ''}>
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+        </div>
+      </div>
+      <div class="results-row" id="ch2-results" style="display:none;">
+        <div class="result-card" id="ch2-result-card"></div>
+        <div class="lesson-card">
+          <h3>Key Takeaway</h3>
+          <p>Differential testing doesn't need an oracle — just <strong>another comparable program</strong>.
+          It catches implementation disagreements but can't tell you which implementation is correct.</p>
+          <div class="strength">No oracle needed — just a reference implementation</div>
+          <div class="strength">Catches bugs at specific locations (e.g., boundary)</div>
+          <div class="limitation">Requires a comparable, trusted program to exist</div>
+          <div class="limitation">Can't determine which program is correct</div>
+        </div>
+      </div>
+      <div style="text-align:right;margin-top:12px;">
+        <button class="btn btn-next" onclick="heatApp.completed.add(2);app.navigateTo(3)">Next: Property-Based Testing →</button>
+      </div>
+    `;
+
+    const canvas = document.getElementById('ch2-canvas');
+    const viz = new Visualizer(canvas);
+    const self = this;
+
+    const draw = (refT, putT, time) => {
+      viz.resize();
+      viz.clear();
+      const tMax = 100;
+      // Reference heat bar
+      viz.ctx.fillStyle = '#6b7280';
+      viz.ctx.font = '11px system-ui';
+      viz.ctx.textAlign = 'left';
+      viz.ctx.fillText('Reference (correct)', 40, 8);
+      viz.drawHeatBar(refT, 12, 30, 0, tMax);
+      // PUT heat bar
+      viz.ctx.fillText('Program Under Test', 40, 58);
+      viz.drawHeatBar(putT, 62, 30, 0, tMax);
+      // Difference bar
+      viz.ctx.fillText('|Difference|', 40, 108);
+      viz.drawDiffBar(refT, putT, 112, 20);
+      // Curves
+      viz.drawAxes(155, 190, 0, tMax, `t = ${time.toFixed(4)}s`);
+      viz.drawCurve(refT, '#34d399', 155, 190, 0, tMax, false);
+      viz.drawCurve(putT, ch.color, 155, 190, 0, tMax, false);
+      viz.drawLegend([
+        { label: 'Reference', color: '#34d399' },
+        { label: 'PUT', color: ch.color }
+      ], 60, 365);
+    };
+
+    const initRef = new HeatSimulator(100, 0.01); initRef.reset('gaussian');
+    const initPut = new HeatSimulator(100, 0.01); initPut.reset('gaussian');
+    draw(Array.from(initRef.T), Array.from(initPut.T), 0);
+
+    document.getElementById('ch2-bug').onchange = (e) => { this.bugStates.dt_bug = e.target.checked; };
+
+    document.getElementById('ch2-reset').onclick = () => {
+      if (self.animId) { cancelAnimationFrame(self.animId); self.animId = null; }
+      draw(Array.from(initRef.T), Array.from(initPut.T), 0);
+      document.getElementById('ch2-results').style.display = 'none';
+      document.getElementById('ch2-run').disabled = false;
+    };
+
+    document.getElementById('ch2-run').onclick = () => {
+      document.getElementById('ch2-run').disabled = true;
+      const bugs = this.bugStates.dt_bug ? { dt_bug: true } : {};
+      const ref = new HeatSimulator(100, 0.01, { bugs: {} }); ref.reset('gaussian');
+      const put = new HeatSimulator(100, 0.01, { bugs }); put.reset('gaussian');
+      let frame = 0;
+      const totalFrames = 150;
+      const stepsPerFrame = 3;
+
+      const animate = () => {
+        ref.stepN(stepsPerFrame);
+        put.stepN(stepsPerFrame);
+        frame++;
+        draw(Array.from(ref.T), Array.from(put.T), ref.time);
+        if (frame < totalFrames) {
+          self.animId = requestAnimationFrame(animate);
+        } else {
+          const result = TestRunner.differential(bugs, totalFrames * stepsPerFrame);
+          const rc = document.getElementById('ch2-result-card');
+          rc.innerHTML = `
+            <h3>Test Result</h3>
+            <div class="result-badge ${result.passed ? 'pass' : 'fail'}">
+              ${result.passed ? '✓ PASS' : '✗ FAIL'}
+            </div>
+            <div class="result-metric">Max Difference: <strong>${result.maxDiff.toExponential(3)}</strong></div>
+            <div class="result-metric">Tolerance: <strong>${result.tolerance.toExponential(1)}</strong></div>
+            <div class="result-metric">Sim Time: <strong>${result.time.toFixed(4)}s</strong></div>
+          `;
+          document.getElementById('ch2-results').style.display = 'grid';
+        }
+      };
+      self.animId = requestAnimationFrame(animate);
+    };
+  }
+
+  // ─── Chapter 3: Property-Based Testing ────────────────────────
+  showChapter3() {
+    const ch = CHAPTERS[2];
+    const content = document.getElementById('content');
+    content.innerHTML = `
+      <div class="chapter-header">
+        <div class="chapter-tag" style="background:${ch.color}22;color:${ch.color}">Chapter 3</div>
+        <h2 style="color:${ch.color}">${ch.title}</h2>
+        <p class="chapter-intro">
+          Even without knowing the exact answer, you know <strong>properties the answer must satisfy</strong>.
+          For an insulated bar: total energy must be conserved, temperatures must stay bounded,
+          and the system must converge toward equilibrium. These are necessary (not sufficient)
+          conditions derived from physics and the numerical method.
+        </p>
+        <div class="code-block"><span class="cm">// The bug: off-by-one in update loop</span>
+<span class="cm">// Skips the last interior point — it never gets updated</span>
+<span class="kw">const</span> upper = <span class="kw">this</span>.bugs.pt_bug ? <span class="kw">this</span>.nx - <span class="num">2</span> : <span class="kw">this</span>.nx - <span class="num">1</span>;
+<span class="kw">for</span> (<span class="kw">let</span> i = <span class="num">1</span>; i < upper; i++) {
+  Tn[i] = <span class="kw">this</span>.T[i] + r * (<span class="kw">this</span>.T[i+<span class="num">1</span>] - <span class="num">2</span>*<span class="kw">this</span>.T[i] + <span class="kw">this</span>.T[i-<span class="num">1</span>]);
+}</div>
+      </div>
+      <div class="property-dashboard" id="ch3-props">
+        <div class="property-card" id="prop-energy">
+          <div class="prop-header"><span class="prop-name">P1: Energy Conservation</span><div class="prop-status"></div></div>
+          <div class="prop-value" id="prop-energy-val">∑T·Δx = —</div>
+          <canvas id="prop-energy-chart" height="40"></canvas>
+        </div>
+        <div class="property-card" id="prop-bounds">
+          <div class="prop-header"><span class="prop-name">P2: Temperature Bounds</span><div class="prop-status"></div></div>
+          <div class="prop-value" id="prop-bounds-val">0 ≤ T[i] ≤ T_max = —</div>
+          <canvas id="prop-bounds-chart" height="40"></canvas>
+        </div>
+        <div class="property-card" id="prop-converge">
+          <div class="prop-header"><span class="prop-name">P3: Monotonic Convergence</span><div class="prop-status"></div></div>
+          <div class="prop-value" id="prop-converge-val">Var(T) = —</div>
+          <canvas id="prop-converge-chart" height="40"></canvas>
+        </div>
+      </div>
+      <div class="viz-area">
+        <div class="viz-label">Heat Distribution T(x)</div>
+        <canvas id="ch3-canvas" height="280" style="height:280px"></canvas>
+      </div>
+      <div class="controls">
+        <button class="btn btn-primary" id="ch3-run" style="background:${ch.color};color:#000">▶ Run with Property Checking</button>
+        <button class="btn btn-secondary" id="ch3-reset">Reset</button>
+        <div class="toggle-group">
+          <span class="toggle-label">Inject Bug: <span class="bug-name">${ch.bugName}</span></span>
+          <label class="toggle">
+            <input type="checkbox" id="ch3-bug" ${this.bugStates.pt_bug ? 'checked' : ''}>
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+        </div>
+      </div>
+      <div class="results-row" id="ch3-results" style="display:none;">
+        <div class="result-card" id="ch3-result-card"></div>
+        <div class="lesson-card">
+          <h3>Key Takeaway</h3>
+          <p>Property-based testing requires <strong>domain knowledge</strong> to define properties, but no oracle.
+          It can't verify the answer is exactly right, but catches when it's definitely wrong.</p>
+          <div class="strength">No oracle needed — just domain properties</div>
+          <div class="strength">Catches violations in real-time during simulation</div>
+          <div class="strength">Properties from physics are reusable across test inputs</div>
+          <div class="limitation">Requires domain expertise to define good properties</div>
+          <div class="limitation">Necessary but not sufficient — bugs may satisfy all properties</div>
+        </div>
+      </div>
+      <div style="text-align:right;margin-top:12px;">
+        <button class="btn btn-next" onclick="heatApp.completed.add(3);app.navigateTo(4)">Next: Metamorphic Testing →</button>
+      </div>
+    `;
+
+    const canvas = document.getElementById('ch3-canvas');
+    const viz = new Visualizer(canvas);
+    const self = this;
+
+    const drawSparkline = (canvasId, data, color, failIdx = -1) => {
+      const c = document.getElementById(canvasId);
+      if (!c) return;
+      const ctx = c.getContext('2d');
+      const dpr = window.devicePixelRatio || 1;
+      const w = c.getBoundingClientRect().width;
+      const h = 40;
+      c.width = w * dpr;
+      c.height = h * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, w, h);
+
+      if (data.length < 2) return;
+      let mn = Infinity, mx = -Infinity;
+      for (const v of data) { if (v < mn) mn = v; if (v > mx) mx = v; }
+      if (mx - mn < 1e-12) { mn -= 1; mx += 1; }
+
+      ctx.beginPath();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.5;
+      for (let i = 0; i < data.length; i++) {
+        const x = (i / (data.length - 1)) * w;
+        const y = h - 4 - ((data[i] - mn) / (mx - mn)) * (h - 8);
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+
+      if (failIdx >= 0 && failIdx < data.length) {
+        const fx = (failIdx / (data.length - 1)) * w;
+        ctx.beginPath();
+        ctx.strokeStyle = '#ef4444';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([3, 3]);
+        ctx.moveTo(fx, 0);
+        ctx.lineTo(fx, h);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    };
+
+    // Initial draw
+    const initSim = new HeatSimulator(100, 0.01); initSim.reset('gaussian');
+    viz.resize(); viz.clear();
+    viz.drawAxes(30, 220, 0, 100);
+    viz.drawHeatBar(initSim.T, 0, 20, 0, 100);
+    viz.drawCurve(Array.from(initSim.T), ch.color, 30, 220, 0, 100);
+
+    document.getElementById('ch3-bug').onchange = (e) => { this.bugStates.pt_bug = e.target.checked; };
+
+    document.getElementById('ch3-reset').onclick = () => {
+      if (self.animId) { cancelAnimationFrame(self.animId); self.animId = null; }
+      this.showChapter3();
+    };
+
+    document.getElementById('ch3-run').onclick = () => {
+      document.getElementById('ch3-run').disabled = true;
+      const bugs = this.bugStates.pt_bug ? { pt_bug: true } : {};
+      const sim = new HeatSimulator(100, 0.01, { bugs });
+      sim.reset('gaussian');
+      const initEnergy = sim.getTotalEnergy();
+      const initMax = Math.max(...sim.T);
+
+      const energyHist = [initEnergy];
+      const boundsMinHist = [Math.min(...sim.T)];
+      const boundsMaxHist = [Math.max(...sim.T)];
+      const mean0 = initEnergy / sim.L;
+      let v0 = 0;
+      for (let i = 0; i < sim.nx; i++) v0 += Math.pow(sim.T[i] - mean0, 2);
+      const varHist = [v0 / sim.nx];
+
+      let energyOk = true, boundsOk = true, convOk = true;
+      let energyFail = -1, boundsFail = -1;
+      let frame = 0;
+      const totalFrames = 200;
+      const stepsPerFrame = 3;
+
+      const animate = () => {
+        for (let s = 0; s < stepsPerFrame; s++) {
+          sim.step();
+          const e = sim.getTotalEnergy();
+          energyHist.push(e);
+          const mn = Math.min(...sim.T);
+          const mx = Math.max(...sim.T);
+          boundsMinHist.push(mn);
+          boundsMaxHist.push(mx);
+          const mean = e / sim.L;
+          let v = 0;
+          for (let i = 0; i < sim.nx; i++) v += Math.pow(sim.T[i] - mean, 2);
+          varHist.push(v / sim.nx);
+
+          if (energyOk && Math.abs(e - initEnergy) > 0.1) {
+            energyOk = false;
+            energyFail = energyHist.length - 1;
+          }
+          if (boundsOk && (mn < -0.01 || mx > initMax + 0.01)) {
+            boundsOk = false;
+            boundsFail = boundsMaxHist.length - 1;
+          }
+        }
+
+        // Check convergence
+        convOk = true;
+        for (let i = 1; i < varHist.length; i++) {
+          if (varHist[i] > varHist[i - 1] + 0.01) { convOk = false; break; }
+        }
+
+        frame++;
+
+        // Update viz
+        viz.resize(); viz.clear();
+        viz.drawHeatBar(sim.T, 0, 20, 0, 100);
+        viz.drawAxes(30, 220, 0, 100, `t = ${sim.time.toFixed(4)}s`);
+        viz.drawCurve(Array.from(sim.T), ch.color, 30, 220, 0, 100);
+
+        // Update property cards
+        const eCard = document.getElementById('prop-energy');
+        eCard.className = 'property-card ' + (energyOk ? 'pass' : 'fail');
+        document.getElementById('prop-energy-val').textContent = `∑T·Δx = ${sim.getTotalEnergy().toFixed(4)} (initial: ${initEnergy.toFixed(4)})`;
+        drawSparkline('prop-energy-chart', energyHist, energyOk ? '#10b981' : '#ef4444', energyFail);
+
+        const bCard = document.getElementById('prop-bounds');
+        bCard.className = 'property-card ' + (boundsOk ? 'pass' : 'fail');
+        const curMin = Math.min(...sim.T).toFixed(4);
+        const curMax = Math.max(...sim.T).toFixed(4);
+        document.getElementById('prop-bounds-val').textContent = `min=${curMin}, max=${curMax}`;
+        drawSparkline('prop-bounds-chart', boundsMaxHist, boundsOk ? '#10b981' : '#ef4444', boundsFail);
+
+        const cCard = document.getElementById('prop-converge');
+        cCard.className = 'property-card ' + (convOk ? 'pass' : 'fail');
+        document.getElementById('prop-converge-val').textContent = `Var(T) = ${varHist[varHist.length - 1].toFixed(4)}`;
+        drawSparkline('prop-converge-chart', varHist, convOk ? '#10b981' : '#ef4444');
+
+        if (frame < totalFrames) {
+          self.animId = requestAnimationFrame(animate);
+        } else {
+          const rc = document.getElementById('ch3-result-card');
+          const allPass = energyOk && boundsOk && convOk;
+          rc.innerHTML = `
+            <h3>Test Result</h3>
+            <div class="result-badge ${allPass ? 'pass' : 'fail'}">${allPass ? '✓ ALL PROPERTIES HOLD' : '✗ PROPERTY VIOLATION'}</div>
+            <div class="result-metric">P1 Energy: <strong style="color:${energyOk ? 'var(--success)' : 'var(--failure)'}">${energyOk ? 'PASS' : 'FAIL at step ' + energyFail}</strong></div>
+            <div class="result-metric">P2 Bounds: <strong style="color:${boundsOk ? 'var(--success)' : 'var(--failure)'}">${boundsOk ? 'PASS' : 'FAIL at step ' + boundsFail}</strong></div>
+            <div class="result-metric">P3 Convergence: <strong style="color:${convOk ? 'var(--success)' : 'var(--failure)'}">${convOk ? 'PASS' : 'FAIL'}</strong></div>
+          `;
+          document.getElementById('ch3-results').style.display = 'grid';
+        }
+      };
+      self.animId = requestAnimationFrame(animate);
+    };
+  }
+
+  // ─── Chapter 4: Metamorphic Testing ───────────────────────────
+  showChapter4() {
+    const ch = CHAPTERS[3];
+    const content = document.getElementById('content');
+    content.innerHTML = `
+      <div class="chapter-header">
+        <div class="chapter-tag" style="background:${ch.color}22;color:${ch.color}">Chapter 4</div>
+        <h2 style="color:${ch.color}">${ch.title}</h2>
+        <p class="chapter-intro">
+          Metamorphic testing exploits <strong>relationships between inputs and outputs</strong>.
+          The heat equation is linear, so scaling the input scales the output. It's also
+          spatially symmetric — mirroring the initial condition should mirror the result.
+          We generate <em>follow-up test cases</em> from a <em>source test case</em> and check
+          if the metamorphic relation holds.
+        </p>
+        <div class="math-block">MR1 (Linearity):  if T_in' = k·T_in  ⟹  T_out' = k·T_out
+MR2 (Symmetry):   if T_in'(x) = T_in(L−x)  ⟹  T_out'(x) = T_out(L−x)</div>
+        <div class="code-block"><span class="cm">// The bug: asymmetric right boundary</span>
+<span class="kw">if</span> (<span class="kw">this</span>.bugs.mt_bug) {
+  Tn[nx-<span class="num">1</span>] = Tn[nx-<span class="num">2</span>] + <span class="num">0.002</span> * Tn[nx-<span class="num">2</span>]; <span class="cm">// slight bias</span>
+} <span class="kw">else</span> {
+  Tn[nx-<span class="num">1</span>] = Tn[nx-<span class="num">2</span>];   <span class="cm">// correct: symmetric with left BC</span>
+}</div>
+      </div>
+      <div class="controls" style="margin-bottom:16px;">
+        <label style="font-size:0.85rem;color:var(--text-secondary);">Metamorphic Relation:</label>
+        <select id="ch4-mr" class="btn btn-secondary" style="padding:8px 14px;">
+          <option value="symmetry">MR2: Symmetry (mirror input)</option>
+          <option value="linearity">MR1: Linearity (scale input ×2)</option>
+        </select>
+      </div>
+      <div class="viz-area">
+        <div class="viz-label" id="ch4-viz-label">Source Test vs Follow-Up Test</div>
+        <canvas id="ch4-canvas" height="380" style="height:380px"></canvas>
+      </div>
+      <div class="controls">
+        <button class="btn btn-primary" id="ch4-run" style="background:${ch.color}">▶ Run Metamorphic Test</button>
+        <button class="btn btn-secondary" id="ch4-reset">Reset</button>
+        <div class="toggle-group">
+          <span class="toggle-label">Inject Bug: <span class="bug-name">${ch.bugName}</span></span>
+          <label class="toggle">
+            <input type="checkbox" id="ch4-bug" ${this.bugStates.mt_bug ? 'checked' : ''}>
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+        </div>
+      </div>
+      <div class="results-row" id="ch4-results" style="display:none;">
+        <div class="result-card" id="ch4-result-card"></div>
+        <div class="lesson-card">
+          <h3>Key Takeaway</h3>
+          <p>Metamorphic testing generates new test cases from existing ones and checks <strong>relations between
+          outputs</strong>, not absolute correctness. It's powerful for alleviating the oracle problem.</p>
+          <div class="strength">No oracle needed — only relations between I/O</div>
+          <div class="strength">Automatically generates follow-up test cases</div>
+          <div class="strength">Catches bugs that break mathematical properties</div>
+          <div class="limitation">Only detects violations of the chosen MR</div>
+          <div class="limitation">Requires insight to identify good metamorphic relations</div>
+        </div>
+      </div>
+      <div style="text-align:right;margin-top:12px;">
+        <button class="btn btn-next" onclick="heatApp.completed.add(4);app.navigateTo(5)">Next: Richardson's Extrapolation →</button>
+      </div>
+    `;
+
+    const canvas = document.getElementById('ch4-canvas');
+    const viz = new Visualizer(canvas);
+    const self = this;
+
+    const drawMT = (srcInit, srcRes, fupInit, fupRes, mr, time) => {
+      viz.resize();
+      viz.clear();
+      const tMax = mr === 'linearity' ? 200 : 100;
+
+      // Source initial
+      viz.ctx.fillStyle = '#9ca3af'; viz.ctx.font = '11px system-ui'; viz.ctx.textAlign = 'left';
+      viz.ctx.fillText('Source — Initial Condition', 40, 8);
+      viz.drawHeatBar(srcInit, 12, 22, 0, tMax);
+
+      // Follow-up initial
+      viz.ctx.fillText('Follow-Up — Initial Condition', 40, 48);
+      viz.drawHeatBar(fupInit, 52, 22, 0, tMax);
+
+      // Results
+      viz.drawAxes(100, 130, 0, tMax, `Results after t = ${time.toFixed(4)}s`);
+      viz.drawCurve(srcRes, '#4ecdc4', 100, 130, 0, tMax);
+
+      if (mr === 'symmetry') {
+        // Mirror fupRes for overlay
+        const mirrored = [...fupRes].reverse();
+        viz.drawCurve(mirrored, '#a78bfa', 100, 130, 0, tMax, true);
+        viz.drawLegend([
+          { label: 'Source result', color: '#4ecdc4' },
+          { label: 'Follow-up (mirrored)', color: '#a78bfa', dashed: true }
+        ], 60, 250);
+      } else {
+        // Scale source by k for overlay
+        const scaled = srcRes.map(v => v * 2);
+        viz.drawCurve(fupRes, '#a78bfa', 100, 130, 0, tMax, true);
+        viz.drawCurve(scaled, '#34d399', 100, 130, 0, tMax);
+        viz.drawLegend([
+          { label: '2 × Source', color: '#34d399' },
+          { label: 'Follow-up result', color: '#a78bfa', dashed: true }
+        ], 60, 250);
+      }
+
+      // Deviation bar
+      viz.ctx.fillText('|Deviation from MR|', 40, 275);
+      const nx = srcRes.length;
+      const devs = new Float64Array(nx);
+      if (mr === 'symmetry') {
+        for (let i = 0; i < nx; i++) devs[i] = Math.abs(srcRes[i] - fupRes[nx - 1 - i]);
+      } else {
+        for (let i = 0; i < nx; i++) devs[i] = Math.abs(fupRes[i] - 2 * srcRes[i]);
+      }
+      let maxDev = Math.max(...devs) || 1e-10;
+      const x0 = 40;
+      const barW = viz.w - 60;
+      for (let i = 0; i < nx; i++) {
+        const x = x0 + (i / (nx - 1)) * barW;
+        const w = barW / (nx - 1) + 1;
+        const d = devs[i] / maxDev;
+        viz.ctx.fillStyle = `rgba(239,68,68,${d * 0.9})`;
+        viz.ctx.fillRect(x, 280, w, 20);
+      }
+      viz.ctx.strokeStyle = '#2d3748';
+      viz.ctx.strokeRect(x0, 280, barW, 20);
+      viz.ctx.fillStyle = '#6b7280'; viz.ctx.font = '11px monospace'; viz.ctx.textAlign = 'right';
+      viz.ctx.fillText(`max dev = ${maxDev.toExponential(2)}`, x0 + barW, 316);
+    };
+
+    document.getElementById('ch4-bug').onchange = (e) => { this.bugStates.mt_bug = e.target.checked; };
+    document.getElementById('ch4-reset').onclick = () => {
+      if (self.animId) { cancelAnimationFrame(self.animId); self.animId = null; }
+      this.showChapter4();
+    };
+
+    document.getElementById('ch4-run').onclick = () => {
+      document.getElementById('ch4-run').disabled = true;
+      const mr = document.getElementById('ch4-mr').value;
+      const bugs = this.bugStates.mt_bug ? { mt_bug: true } : {};
+      const result = TestRunner.metamorphic(bugs, mr);
+
+      // Animate build-up
+      const srcSim = new HeatSimulator(100, 0.01, { bugs });
+      const fupSim = new HeatSimulator(100, 0.01, { bugs });
+
+      if (mr === 'symmetry') {
+        srcSim.reset('asymmetric');
+        fupSim.reset(x => 100 * Math.exp(-Math.pow((1 - x - 0.3) / 0.1, 2)));
+      } else {
+        srcSim.reset('gaussian');
+        fupSim.reset(x => 2 * 100 * Math.exp(-Math.pow((x - 0.5) / 0.1, 2)));
+      }
+
+      const srcInit = Array.from(srcSim.T);
+      const fupInit = Array.from(fupSim.T);
+      let frame = 0;
+      const totalFrames = 100;
+      const stepsPerFrame = 3;
+
+      const animate = () => {
+        srcSim.stepN(stepsPerFrame);
+        fupSim.stepN(stepsPerFrame);
+        frame++;
+        drawMT(srcInit, Array.from(srcSim.T), fupInit, Array.from(fupSim.T), mr, srcSim.time);
+        if (frame < totalFrames) {
+          self.animId = requestAnimationFrame(animate);
+        } else {
+          const rc = document.getElementById('ch4-result-card');
+          rc.innerHTML = `
+            <h3>Test Result</h3>
+            <div class="result-badge ${result.passed ? 'pass' : 'fail'}">${result.passed ? '✓ MR HOLDS' : '✗ MR VIOLATED'}</div>
+            <div class="result-metric">Relation: <strong>${result.mr}</strong></div>
+            <div class="result-metric">Max Deviation: <strong>${result.maxDeviation.toExponential(3)}</strong></div>
+            <div class="result-metric">Threshold: <strong>0.01</strong></div>
+          `;
+          document.getElementById('ch4-results').style.display = 'grid';
+        }
+      };
+      self.animId = requestAnimationFrame(animate);
+    };
+  }
+
+  // ─── Chapter 5: Richardson's Extrapolation ────────────────────
+  showChapter5() {
+    const ch = CHAPTERS[4];
+    const content = document.getElementById('content');
+    content.innerHTML = `
+      <div class="chapter-header">
+        <div class="chapter-tag" style="background:${ch.color}22;color:${ch.color}">Chapter 5</div>
+        <h2 style="color:${ch.color}">${ch.title}</h2>
+        <p class="chapter-intro">
+          Numerical methods have a known <strong>convergence order</strong>. Our central-difference scheme
+          is second-order in space: halving the grid spacing Δx should reduce the error by a factor of 4.
+          Richardson's extrapolation tests this by running at three resolutions (h, h/2, h/4) and
+          checking the convergence ratio:
+        </p>
+        <div class="math-block">Ratio = (p(h) − p(h/2)) / (p(h/2) − p(h/4))
+
+For a second-order method: Ratio ≈ 4.0
+For a first-order method:  Ratio ≈ 2.0</div>
+        <p class="chapter-intro">
+          The bug replaces the second-order central difference <code>(T[i+1] - 2T[i] + T[i-1])</code> with
+          a first-order forward difference <code>(T[i+1] - T[i])</code>, degrading the convergence order.
+        </p>
+        <div class="code-block"><span class="cm">// The bug: first-order stencil instead of second-order</span>
+<span class="kw">if</span> (<span class="kw">this</span>.bugs.re_bug) {
+  Tn[i] = <span class="kw">this</span>.T[i] + r * (<span class="kw">this</span>.T[i+<span class="num">1</span>] - <span class="kw">this</span>.T[i]);         <span class="cm">// O(Δx) — wrong!</span>
+} <span class="kw">else</span> {
+  Tn[i] = <span class="kw">this</span>.T[i] + r * (<span class="kw">this</span>.T[i+<span class="num">1</span>] - <span class="num">2</span>*<span class="kw">this</span>.T[i] + <span class="kw">this</span>.T[i-<span class="num">1</span>]);  <span class="cm">// O(Δx²) — correct</span>
+}</div>
+      </div>
+      <div class="viz-area">
+        <div class="viz-label">Solutions at Three Resolutions (nx = 20, 40, 80)</div>
+        <canvas id="ch5-canvas" height="300" style="height:300px"></canvas>
+      </div>
+      <div class="viz-area" style="text-align:center;padding:24px;">
+        <div class="viz-label">Convergence Ratio</div>
+        <div id="ch5-gauge" style="font-size:2.2rem;font-weight:800;font-family:monospace;margin:12px 0;">—</div>
+        <div style="display:flex;justify-content:center;gap:40px;font-size:0.85rem;color:var(--text-secondary);">
+          <span>Expected: <strong style="color:var(--success)">4.00</strong> (2nd order)</span>
+          <span>Tolerance: <strong>±1.0</strong></span>
+        </div>
+      </div>
+      <div class="controls">
+        <button class="btn btn-primary" id="ch5-run" style="background:${ch.color};color:#000">▶ Run Convergence Test</button>
+        <button class="btn btn-secondary" id="ch5-reset">Reset</button>
+        <div class="toggle-group">
+          <span class="toggle-label">Inject Bug: <span class="bug-name">${ch.bugName}</span></span>
+          <label class="toggle">
+            <input type="checkbox" id="ch5-bug" ${this.bugStates.re_bug ? 'checked' : ''}>
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+        </div>
+      </div>
+      <div class="results-row" id="ch5-results" style="display:none;">
+        <div class="result-card" id="ch5-result-card"></div>
+        <div class="lesson-card">
+          <h3>Key Takeaway</h3>
+          <p>Richardson's extrapolation is a powerful check on <strong>numerical correctness</strong>.
+          It verifies the convergence order of the discretization without needing an oracle.
+          However, it's very strict — any error can cause violation.</p>
+          <div class="strength">No oracle needed — uses self-convergence</div>
+          <div class="strength">Extremely sensitive to discretization errors</div>
+          <div class="strength">Well-grounded in numerical analysis theory</div>
+          <div class="limitation">Very specific — only checks convergence order</div>
+          <div class="limitation">Doesn't help locate the bug</div>
+          <div class="limitation">May not be applicable to all numerical methods</div>
+        </div>
+      </div>
+      <div style="text-align:right;margin-top:12px;">
+        <button class="btn btn-next" onclick="heatApp.completed.add(5);app.showSummary()">View Summary →</button>
+      </div>
+    `;
+
+    const canvas = document.getElementById('ch5-canvas');
+    const viz = new Visualizer(canvas);
+    const self = this;
+
+    document.getElementById('ch5-bug').onchange = (e) => { this.bugStates.re_bug = e.target.checked; };
+    document.getElementById('ch5-reset').onclick = () => {
+      if (self.animId) { cancelAnimationFrame(self.animId); self.animId = null; }
+      this.showChapter5();
+    };
+
+    document.getElementById('ch5-run').onclick = () => {
+      document.getElementById('ch5-run').disabled = true;
+      const bugs = this.bugStates.re_bug ? { re_bug: true } : {};
+      const result = TestRunner.richardson(bugs);
+
+      viz.resize();
+      viz.clear();
+      viz.drawConvergencePlot(result.results, 20, 260);
+
+      // Gauge
+      const gauge = document.getElementById('ch5-gauge');
+      const ratio = result.ratio;
+      const passed = result.passed;
+      gauge.textContent = isNaN(ratio) ? 'NaN' : ratio.toFixed(3);
+      gauge.style.color = passed ? 'var(--success)' : 'var(--failure)';
+
+      // Animate gauge counting up
+      let displayRatio = 0;
+      const targetRatio = ratio;
+      const steps = 60;
+      let step = 0;
+      const animGauge = () => {
+        step++;
+        displayRatio = targetRatio * (step / steps);
+        gauge.textContent = displayRatio.toFixed(3);
+        if (step < steps) {
+          self.animId = requestAnimationFrame(animGauge);
+        } else {
+          gauge.textContent = targetRatio.toFixed(3);
+          const rc = document.getElementById('ch5-result-card');
+          rc.innerHTML = `
+            <h3>Test Result</h3>
+            <div class="result-badge ${passed ? 'pass' : 'fail'}">${passed ? '✓ CORRECT ORDER' : '✗ WRONG CONVERGENCE ORDER'}</div>
+            <div class="result-metric">Observed Ratio: <strong>${ratio.toFixed(3)}</strong></div>
+            <div class="result-metric">Expected Ratio: <strong>${result.expectedRatio.toFixed(1)}</strong></div>
+            <div class="result-metric">Resolutions: <strong>${result.nxVals.join(', ')}</strong> grid points</div>
+            ${!passed ? '<div class="result-metric" style="color:var(--failure);margin-top:8px;">⚠ Ratio ≈ 2 indicates first-order convergence instead of second-order</div>' : ''}
+          `;
+          document.getElementById('ch5-results').style.display = 'grid';
+        }
+      };
+      self.animId = requestAnimationFrame(animGauge);
+    };
+  }
+
+  // ─── Summary Screen ───────────────────────────────────────────
+  showSummary() {
+    if (this.animId) { cancelAnimationFrame(this.animId); this.animId = null; }
+    this.currentChapter = 6;
+    this.renderSidebar();
+    const content = document.getElementById('content');
+    content.innerHTML = `
+      <div class="summary-screen">
+        <div style="text-align:center;margin-bottom:32px;">
+          <div style="font-size:2.5rem;margin-bottom:12px;">🎓</div>
+          <h2>Comparing the Five Approaches</h2>
+          <p style="color:var(--text-secondary);max-width:600px;margin:0 auto;line-height:1.7;">
+            Each testing approach has unique strengths. In practice, the ISSTA 2020 study found that
+            <strong>property-based testing</strong> and <strong>metamorphic testing</strong> were the most effective,
+            finding 18+ and 8+ bugs respectively across five nuclear simulation programs.
+          </p>
+        </div>
+
+        <table class="summary-table">
+          <thead>
+            <tr>
+              <th>Approach</th>
+              <th>Needs Oracle?</th>
+              <th>Domain Knowledge?</th>
+              <th>Best At Catching</th>
+              <th>Main Limitation</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="color:var(--accent-1)">Classical Testing</td>
+              <td class="yes">Yes ✗</td>
+              <td class="no">Minimal</td>
+              <td>Any bug — if oracle exists</td>
+              <td>Analytical solutions rarely available</td>
+            </tr>
+            <tr>
+              <td style="color:var(--accent-2)">Differential Testing</td>
+              <td class="some">No (needs ref.)</td>
+              <td class="no">Minimal</td>
+              <td>Implementation differences</td>
+              <td>Requires comparable program</td>
+            </tr>
+            <tr>
+              <td style="color:var(--accent-3)">Property-Based Testing</td>
+              <td class="no">No ✓</td>
+              <td class="yes">High</td>
+              <td>Invariant violations (conservation, bounds)</td>
+              <td>Properties are necessary, not sufficient</td>
+            </tr>
+            <tr>
+              <td style="color:var(--accent-4)">Metamorphic Testing</td>
+              <td class="no">No ✓</td>
+              <td class="some">Moderate</td>
+              <td>Broken I/O relationships (symmetry, linearity)</td>
+              <td>Only catches MR violations</td>
+            </tr>
+            <tr>
+              <td style="color:var(--accent-5)">Richardson's Extrapolation</td>
+              <td class="no">No ✓</td>
+              <td class="some">Moderate</td>
+              <td>Wrong convergence order (discretization errors)</td>
+              <td>Very specific; no bug localization</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:28px;">
+          <div class="lesson-card">
+            <h3>Bug Detection Matrix</h3>
+            <div style="font-size:0.85rem;line-height:2;font-family:monospace;">
+              <div><span style="color:var(--accent-1)">CT</span>  caught: Wrong α via oracle comparison</div>
+              <div><span style="color:var(--accent-2)">DT</span>  caught: BC error via reference divergence</div>
+              <div><span style="color:var(--accent-3)">PT</span>  caught: Off-by-one via energy leak</div>
+              <div><span style="color:var(--accent-4)">MT</span>  caught: Asymmetric BC via symmetry MR</div>
+              <div><span style="color:var(--accent-5)">RE</span>  caught: Wrong stencil via convergence ratio</div>
+            </div>
+          </div>
+          <div class="lesson-card">
+            <h3>From the Paper (He et al., ISSTA 2020)</h3>
+            <p style="font-size:0.85rem;">
+              Testing five nuclear simulation programs, the team found <strong>33 bugs</strong> using these five approaches.
+              Key findings: PT and MT were the most effective. CT was limited by the oracle problem.
+              DT depended on having a comparable program. RE was applicable in only 2 of 5 programs.
+              <br><br>
+              <em>"Domain knowledge is crucial for testing HPNSPs, but how to express and exchange domain
+              knowledge for testing is an open issue."</em>
+            </p>
+          </div>
+        </div>
+
+        <div style="text-align:center;margin-top:32px;">
+          <button class="btn btn-secondary" onclick="heatApp.showIntro()" style="margin-right:12px;">← Back to Start</button>
+          <button class="btn btn-primary" onclick="heatApp.navigateTo(1)">Revisit Chapter 1</button>
+        </div>
+      </div>
+    `;
+  }
+}
+
+// ─── Initialize ─────────────────────────────────────────────────
+window.heatApp = new App();
+window.heatApp.init();
+</script>
+</body>
+</html>
